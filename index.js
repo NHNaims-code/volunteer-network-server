@@ -10,7 +10,7 @@ const cors = require('cors');
 
 
 
-const serviceAccount = require("./vollunteer-network-firebase-adminsdk-o0o69-0db595042b.json");
+const serviceAccount = require("./configs/vollunteer-network-firebase-adminsdk-o0o69-0db595042b.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
