@@ -9,6 +9,9 @@ const port = 5000
 const cors = require('cors');
 
 
+const app = express()
+app.use(bodyParser.json())
+app.use(cors());
 
 const serviceAccount = require("./configs/vollunteer-network-firebase-adminsdk-o0o69-0db595042b.json");
 
@@ -16,11 +19,6 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: "https://vollunteer-network.firebaseio.com"
 });
-
-
-const app = express()
-app.use(bodyParser.json())
-app.use(cors())
 
 app.get('/', (req, res) => {
   res.send('Hello World!')
@@ -82,32 +80,11 @@ client.connect(err => {
 
     app.get('/user/:email', (req, res) => {
 
-        const bearer = req.headers.authorization;
-        if(bearer && bearer.startsWith('Bearer ')){
-            const idToken = bearer.split(' ')[1];
-
-          // idToken comes from the client app
-          admin.auth().verifyIdToken(idToken)
-          .then(function(decodedToken) {
-            let uid = decodedToken.uid;
-            if(uid.email === req.params.email){
                 registerCollection.find({email: req.params.email})
                 .toArray((err, documents) => {
                     res.send(documents)
                 })
-            }
 
-            console.log({uid});
-          }).catch(function(error) {
-            res.status(401).send('un-authorized');
-            // Handle error
-          });
-            // idToken comes from the client app
-   
-        }
-        else{
-          res.status(401).send('un-authorized')
-        }
     })
 
     
