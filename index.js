@@ -3,8 +3,19 @@ const bodyParser = require('body-parser');
 const MongoClient = require('mongodb').MongoClient;
 const ObjectId = require('mongodb').ObjectId;
 require('dotenv').config()
+const admin = require('firebase-admin');
+
 const port = 5000
 const cors = require('cors');
+
+
+
+const serviceAccount = require("./vollunteer-network-firebase-adminsdk-o0o69-0db595042b.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: "https://vollunteer-network.firebaseio.com"
+});
 
 
 const app = express()
@@ -25,10 +36,33 @@ client.connect(err => {
   
     app.post('/addevent', (req, res) => {
         const event = req.body;
-        eventCollection.insertOne(event)
-        .then(result => {
-            res.send(result.insertedCount > 0)
-        })
+        // idToken comes from the client app
+        const bearer = req.headers.authorization;
+        if(bearer && bearer.startsWith('Bearer ')){
+            const idToken = bearer.split(' ')[1];
+            console.log({ idToken });
+  
+          // idToken comes from the client app
+          admin.auth().verifyIdToken(idToken)
+          .then(function(decodedToken) {
+            let uid = decodedToken.uid;
+
+             eventCollection.insertOne(event)
+            .then(result => {
+                res.send(result.insertedCount > 0)
+            })
+
+            console.log({uid});
+          }).catch(function(error) {
+            res.status(401).send('un-authorized');
+            // Handle error
+          });
+            // idToken comes from the client app
+   
+        }
+        else{
+          res.status(401).send('un-authorized')
+        }
     })
 
     app.get('/events', (req, res) => {
@@ -47,17 +81,63 @@ client.connect(err => {
     })
 
     app.get('/user/:email', (req, res) => {
-        registerCollection.find({email: req.params.email})
-        .toArray((err, documents) => {
-            res.send(documents)
-        })
-        
+
+        const bearer = req.headers.authorization;
+        if(bearer && bearer.startsWith('Bearer ')){
+            const idToken = bearer.split(' ')[1];
+
+          // idToken comes from the client app
+          admin.auth().verifyIdToken(idToken)
+          .then(function(decodedToken) {
+            let uid = decodedToken.uid;
+            if(uid.email === req.params.email){
+                registerCollection.find({email: req.params.email})
+                .toArray((err, documents) => {
+                    res.send(documents)
+                })
+            }
+
+            console.log({uid});
+          }).catch(function(error) {
+            res.status(401).send('un-authorized');
+            // Handle error
+          });
+            // idToken comes from the client app
+   
+        }
+        else{
+          res.status(401).send('un-authorized')
+        }
     })
+
+    
     app.get('/users', (req, res) => {
-        registerCollection.find({})
-        .toArray((err, documents) => {
-            res.send(documents)
-        })
+
+        const bearer = req.headers.authorization;
+        if(bearer && bearer.startsWith('Bearer ')){
+            const idToken = bearer.split(' ')[1];
+  
+          // idToken comes from the client app
+          admin.auth().verifyIdToken(idToken)
+          .then(function(decodedToken) {
+            let uid = decodedToken.uid;
+
+            registerCollection.find({})
+            .toArray((err, documents) => {
+                res.send(documents)
+            })
+
+            console.log({uid});
+          }).catch(function(error) {
+            res.status(401).send('un-authorized');
+            // Handle error
+          });
+            // idToken comes from the client app
+   
+        }
+        else{
+          res.status(401).send('un-authorized')
+        }
         
     })
 
